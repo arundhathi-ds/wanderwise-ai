@@ -14,7 +14,182 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          thread_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          thread_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          thread_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "chat_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_threads: {
+        Row: {
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      favorites: {
+        Row: {
+          attraction_name: string | null
+          created_at: string
+          destination_id: string
+          destination_name: string
+          id: string
+          image_url: string | null
+          user_id: string
+        }
+        Insert: {
+          attraction_name?: string | null
+          created_at?: string
+          destination_id: string
+          destination_name: string
+          id?: string
+          image_url?: string | null
+          user_id: string
+        }
+        Update: {
+          attraction_name?: string | null
+          created_at?: string
+          destination_id?: string
+          destination_name?: string
+          id?: string
+          image_url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      itineraries: {
+        Row: {
+          created_at: string
+          destination: string
+          duration: number
+          id: string
+          interests: string[]
+          itinerary_content: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          destination: string
+          duration: number
+          id?: string
+          interests?: string[]
+          itinerary_content: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          destination?: string
+          duration?: number
+          id?: string
+          interests?: string[]
+          itinerary_content?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          bio: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          travel_style: string | null
+          updated_at: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id: string
+          travel_style?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          travel_style?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      recently_viewed: {
+        Row: {
+          destination_id: string
+          destination_name: string
+          id: string
+          image_url: string | null
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          destination_id: string
+          destination_name: string
+          id?: string
+          image_url?: string | null
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          destination_id?: string
+          destination_name?: string
+          id?: string
+          image_url?: string | null
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
