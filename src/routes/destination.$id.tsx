@@ -8,7 +8,7 @@ import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getDestination, DESTINATIONS } from "@/lib/destinations";
+import { getDestination, DESTINATIONS, type Destination } from "@/lib/destinations";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { toggleFavorite } from "@/lib/favorites.functions";
@@ -56,7 +56,7 @@ export const Route = createFileRoute("/destination/$id")({
 });
 
 function DestPage() {
-  const { d } = Route.useLoaderData();
+  const { d } = Route.useLoaderData() as { d: Destination };
   const [authed, setAuthed] = useState(false);
   const [fav, setFav] = useState(false);
   const toggle = useServerFn(toggleFavorite);
