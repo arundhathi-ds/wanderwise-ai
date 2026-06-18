@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Compass } from "lucide-react";
+import { Compass, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -27,14 +27,20 @@ const passwordSchema = z
   .max(72, "Password is too long")
   .regex(/[A-Za-z]/, "Include at least one letter")
   .regex(/[0-9]/, "Include at least one number");
-const signUpSchema = z.object({
-  email: emailSchema,
-  password: passwordSchema,
-  displayName: z.string().trim().max(50, "Display name is too long").optional(),
-});
+const signUpSchema = z
+  .object({
+    email: emailSchema,
+    password: passwordSchema,
+    confirmPassword: z.string(),
+    displayName: z.string().trim().max(50, "Display name is too long").optional(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 const signInSchema = z.object({ email: emailSchema, password: z.string().min(1, "Enter your password") });
 
-type FieldErrors = Partial<Record<"email" | "password" | "displayName", string>>;
+type FieldErrors = Partial<Record<"email" | "password" | "confirmPassword" | "displayName", string>>;
 
 function friendlyAuthError(message: string): string {
   const m = message.toLowerCase();
@@ -50,10 +56,53 @@ function friendlyAuthError(message: string): string {
   return message;
 }
 
+function PasswordInput({
+  id,
+  value,
+  onChange,
+  autoComplete,
+  invalid,
+  minLength,
+}: {
+  id: string;
+  value: string;
+  onChange: (v: string) => void;
+  autoComplete: string;
+  invalid?: boolean;
+  minLength?: number;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        type={show ? "text" : "password"}
+        autoComplete={autoComplete}
+        required
+        minLength={minLength}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-invalid={invalid}
+        className="pr-10"
+      />
+      <button
+        type="button"
+        onClick={() => setShow((s) => !s)}
+        aria-label={show ? "Hide password" : "Show password"}
+        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
+        tabIndex={-1}
+      >
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+  );
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
@@ -87,7 +136,7 @@ function AuthPage() {
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     setErrors({});
-    const parsed = signUpSchema.safeParse({ email, password, displayName });
+    const parsed = signUpSchema.safeParse({ email, password, confirmPassword, displayName });
     if (!parsed.success) return setErrors(zodToErrors(parsed.error));
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
@@ -104,6 +153,7 @@ function AuthPage() {
       toast.success("Account created! Check your email to confirm, then sign in.");
       setMode("signin");
       setPassword("");
+      setConfirmPassword("");
       return;
     }
     toast.success("Account created! You're signed in.");
@@ -171,7 +221,7 @@ function AuthPage() {
                 </div>
                 <div>
                   <Label htmlFor="sp">Password</Label>
-                  <Input id="sp" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} aria-invalid={!!errors.password} />
+                  <PasswordInput id="sp" value={password} onChange={setPassword} autoComplete="current-password" invalid={!!errors.password} />
                   {errors.password && <p className="mt-1 text-xs text-destructive">{errors.password}</p>}
                 </div>
                 <Button className="w-full" disabled={loading}>
@@ -200,12 +250,17 @@ function AuthPage() {
                 </div>
                 <div>
                   <Label htmlFor="up">Password</Label>
-                  <Input id="up" type="password" autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} aria-invalid={!!errors.password} />
+                  <PasswordInput id="up" value={password} onChange={setPassword} autoComplete="new-password" minLength={8} invalid={!!errors.password} />
                   {errors.password ? (
                     <p className="mt-1 text-xs text-destructive">{errors.password}</p>
                   ) : (
                     <p className="mt-1 text-xs text-muted-foreground">At least 8 characters, with letters and numbers.</p>
                   )}
+                </div>
+                <div>
+                  <Label htmlFor="cp">Confirm password</Label>
+                  <PasswordInput id="cp" value={confirmPassword} onChange={setConfirmPassword} autoComplete="new-password" minLength={8} invalid={!!errors.confirmPassword} />
+                  {errors.confirmPassword && <p className="mt-1 text-xs text-destructive">{errors.confirmPassword}</p>}
                 </div>
                 <Button className="w-full" disabled={loading}>
                   {loading ? "Creating…" : "Create account"}
