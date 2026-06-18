@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Compass } from "lucide-react";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,36 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+const emailSchema = z.string().trim().email("Enter a valid email address").max(255);
+const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .max(72, "Password is too long")
+  .regex(/[A-Za-z]/, "Include at least one letter")
+  .regex(/[0-9]/, "Include at least one number");
+const signUpSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+  displayName: z.string().trim().max(50, "Display name is too long").optional(),
+});
+const signInSchema = z.object({ email: emailSchema, password: z.string().min(1, "Enter your password") });
+
+type FieldErrors = Partial<Record<"email" | "password" | "displayName", string>>;
+
+function friendlyAuthError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login")) return "Incorrect email or password.";
+  if (m.includes("user already registered") || m.includes("already been registered"))
+    return "An account with this email already exists. Try signing in instead.";
+  if (m.includes("email not confirmed")) return "Please confirm your email before signing in.";
+  if (m.includes("pwned") || m.includes("compromised"))
+    return "This password has appeared in a data breach. Please choose a different one.";
+  if (m.includes("weak password") || m.includes("password should"))
+    return "Password is too weak. Use at least 8 characters with letters and numbers.";
+  if (m.includes("rate limit")) return "Too many attempts. Please wait a moment and try again.";
+  return message;
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -26,42 +57,70 @@ function AuthPage() {
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
+  const [errors, setErrors] = useState<FieldErrors>({});
+
+  function zodToErrors(err: z.ZodError): FieldErrors {
+    const out: FieldErrors = {};
+    for (const issue of err.issues) {
+      const key = issue.path[0] as keyof FieldErrors | undefined;
+      if (key && !out[key]) out[key] = issue.message;
+    }
+    return out;
+  }
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
+    setErrors({});
+    const parsed = signInSchema.safeParse({ email, password });
+    if (!parsed.success) return setErrors(zodToErrors(parsed.error));
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email: parsed.data.email,
+      password: parsed.data.password,
+    });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyAuthError(error.message));
     toast.success("Welcome back!");
     navigate({ to: "/dashboard" });
   }
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
+    setErrors({});
+    const parsed = signUpSchema.safeParse({ email, password, displayName });
+    if (!parsed.success) return setErrors(zodToErrors(parsed.error));
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
+    const { data, error } = await supabase.auth.signUp({
+      email: parsed.data.email,
+      password: parsed.data.password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { display_name: displayName || email.split("@")[0] },
+        data: { display_name: parsed.data.displayName || parsed.data.email.split("@")[0] },
       },
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyAuthError(error.message));
+    if (!data.session) {
+      toast.success("Account created! Check your email to confirm, then sign in.");
+      setMode("signin");
+      setPassword("");
+      return;
+    }
     toast.success("Account created! You're signed in.");
     navigate({ to: "/dashboard" });
   }
 
   async function handleForgot(e: React.FormEvent) {
     e.preventDefault();
+    setErrors({});
+    const parsed = emailSchema.safeParse(email);
+    if (!parsed.success) return setErrors({ email: parsed.error.issues[0].message });
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyAuthError(error.message));
     toast.success("Reset link sent — check your inbox.");
     setMode("signin");
   }
