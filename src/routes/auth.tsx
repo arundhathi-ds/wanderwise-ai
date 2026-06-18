@@ -166,11 +166,13 @@ function AuthPage() {
               <form onSubmit={handleSignIn} className="mt-6 space-y-4">
                 <div>
                   <Label htmlFor="se">Email</Label>
-                  <Input id="se" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <Input id="se" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} aria-invalid={!!errors.email} />
+                  {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email}</p>}
                 </div>
                 <div>
                   <Label htmlFor="sp">Password</Label>
-                  <Input id="sp" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <Input id="sp" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} aria-invalid={!!errors.password} />
+                  {errors.password && <p className="mt-1 text-xs text-destructive">{errors.password}</p>}
                 </div>
                 <Button className="w-full" disabled={loading}>
                   {loading ? "Signing in…" : "Sign in"}
@@ -188,16 +190,22 @@ function AuthPage() {
               <form onSubmit={handleSignUp} className="mt-6 space-y-4">
                 <div>
                   <Label htmlFor="dn">Display name</Label>
-                  <Input id="dn" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Wanderer" />
+                  <Input id="dn" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Wanderer" aria-invalid={!!errors.displayName} />
+                  {errors.displayName && <p className="mt-1 text-xs text-destructive">{errors.displayName}</p>}
                 </div>
                 <div>
                   <Label htmlFor="ue">Email</Label>
-                  <Input id="ue" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <Input id="ue" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} aria-invalid={!!errors.email} />
+                  {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email}</p>}
                 </div>
                 <div>
                   <Label htmlFor="up">Password</Label>
-                  <Input id="up" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
-                  <p className="mt-1 text-xs text-muted-foreground">At least 6 characters.</p>
+                  <Input id="up" type="password" autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} aria-invalid={!!errors.password} />
+                  {errors.password ? (
+                    <p className="mt-1 text-xs text-destructive">{errors.password}</p>
+                  ) : (
+                    <p className="mt-1 text-xs text-muted-foreground">At least 8 characters, with letters and numbers.</p>
+                  )}
                 </div>
                 <Button className="w-full" disabled={loading}>
                   {loading ? "Creating…" : "Create account"}
