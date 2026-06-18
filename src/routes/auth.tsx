@@ -142,7 +142,8 @@ function AuthPage() {
             </div>
             <div>
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} aria-invalid={!!errors.email} />
+              {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email}</p>}
             </div>
             <Button className="w-full" disabled={loading}>
               {loading ? "Sending…" : "Send reset link"}
