@@ -80,7 +80,7 @@ function BudgetPage() {
 
   useEffect(() => {
     ls()
-      .then((r) => setList(r as SavedBudget[]))
+      .then((r) => setList(r as unknown as SavedBudget[]))
       .catch(() => {})
       .finally(() => setListLoading(false));
   }, [ls]);
@@ -110,7 +110,7 @@ function BudgetPage() {
       setResult(r.result);
       if (save && r.saved) {
         toast.success("Budget saved");
-        ls().then((rr) => setList(rr as SavedBudget[]));
+        ls().then((rr) => setList(rr as unknown as SavedBudget[]));
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not generate budget");
