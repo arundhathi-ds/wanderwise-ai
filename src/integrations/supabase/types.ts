@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      budgets: {
+        Row: {
+          breakdown: Json
+          created_at: string
+          currency: string
+          destination: string
+          duration: number
+          id: string
+          notes: string | null
+          total_estimate: number
+          travel_style: string
+          travelers: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          breakdown?: Json
+          created_at?: string
+          currency?: string
+          destination: string
+          duration: number
+          id?: string
+          notes?: string | null
+          total_estimate?: number
+          travel_style?: string
+          travelers?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          breakdown?: Json
+          created_at?: string
+          currency?: string
+          destination?: string
+          duration?: number
+          id?: string
+          notes?: string | null
+          total_estimate?: number
+          travel_style?: string
+          travelers?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
